@@ -1,0 +1,12 @@
+fastapi==0.115.0
+uvicorn[standard]==0.32.0
+sqlalchemy==2.0.35
+pydantic==2.9.2
+pydantic-settings==2.6.1
+python-jose[cryptography]==3.4.0
+httpx==0.28.1
+python-multipart==0.0.12
+alembic==1.14.0
+pytest==8.3.4
+pytest-asyncio==0.23.8
+aiosqlite==0.20.0

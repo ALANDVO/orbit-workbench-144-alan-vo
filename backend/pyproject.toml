@@ -1,0 +1,42 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "orbit-workbench-144-alan-vo-backend"
+version = "1.0.0"
+description = "Document Index for Vectorless, Reasoning-based RAG - Backend"
+readme = "README.md"
+authors = [{name = "Alan Vo", email = "alanvo@gmail.com"}]
+license = {text = "MIT"}
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi==0.115.0",
+    "uvicorn[standard]==0.32.0",
+    "sqlalchemy==2.0.35",
+    "pydantic==2.9.2",
+    "pydantic-settings==2.6.1",
+    "python-jose[cryptography]==3.4.0",
+    "httpx==0.28.1",
+    "python-multipart==0.0.12",
+    "alembic==1.14.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest==8.3.4",
+    "pytest-asyncio==0.23.8",
+    "httpx==0.28.1",
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["app*"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
