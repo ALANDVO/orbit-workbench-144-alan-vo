@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "name": "orbit-workbench-144-alan-vo",
+  "owner": "ALANDVO",
+  "email": "alanvo@gmail.com",
+  "domain": "AI/ML developer tools",
+  "summary": "Work in progress: orbit-workbench-144-alan-vo",
+  "workflows": [
+    "Create and manage hierarchical document indexes with structured nodes",
+    "Apply incremental updates by detecting changed content via SHA-256 hashing",
+    "Track document version history with change summaries and affected node lists",
+    "Extract leaf nodes for vectorless retrieval workflows"
+  ],
+  "auth": "oidc-keycloak-saml-broker",
+  "llm_providers": [
+    "openai-compatible",
+    "anthropic",
+    "gemini",
+    "ollama"
+  ],
+  "status": "work-in-progress"
+}
