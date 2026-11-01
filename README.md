@@ -1,4 +1,4 @@
-# Orbit Workbench
+# Orbit Workbench — Alan Vo
 
 > Work in progress. This checkpoint may be incomplete or fail tests. See PLAN.md and STATUS.md before use.
 
@@ -33,6 +33,7 @@ Orbit Workbench provides:
 - **Document Management**: Create, list, search, and delete documents with pagination
 - **Hierarchical Node Tree**: Build and navigate document structure with nested sections
 - **Incremental Updates**: Apply partial updates by detecting changed nodes via content hashing
+- **Change Detection**: Preview document changes before applying incremental updates
 - **Version Tracking**: Maintain document version history with change summaries
 - **Leaf Node Extraction**: Efficiently retrieve leaf nodes for retrieval
 - **RESTful API**: FastAPI backend with comprehensive endpoints
@@ -94,6 +95,7 @@ graph TB
 
 ### Incremental Updates
 - `POST /api/documents/{id}/incremental-update` - Apply incremental update
+- `POST /api/documents/{id}/detect-changes` - Detect changes between current and proposed node structure
 
 ### Health
 - `GET /api/health` - Health check

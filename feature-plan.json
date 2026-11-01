@@ -1,11 +1,33 @@
 {
   "schema_version": 1,
-  "current_feature": "continue-implementation",
+  "current_feature": "diff-detection-endpoint",
   "features": [
+    {
+      "id": "diff-detection-endpoint",
+      "title": "Add detect-changes API endpoint and UI",
+      "status": "done",
+      "acceptance": [
+        "Backend API endpoint `/documents/{doc_id}/detect-changes` returns changed/new/unchanged nodes",
+        "Frontend Diff tab allows pasting JSON node data and displays diff results",
+        "All backend tests pass (15/15)",
+        "All frontend tests pass (14/14)"
+      ],
+      "implementation": [
+        "backend/app/api/documents.py",
+        "backend/app/services/document_service.py",
+        "frontend/src/types/index.ts",
+        "frontend/src/api/client.ts",
+        "frontend/src/components/DocumentDetailPage.tsx"
+      ],
+      "tests": [
+        "backend/tests/test_document_service.py",
+        "frontend/src/components/DocumentDetailPage.test.tsx"
+      ]
+    },
     {
       "id": "continue-implementation",
       "title": "Continue implementation and resolve known failures",
-      "status": "in_progress",
+      "status": "planned",
       "acceptance": [
         "Run checks, fix failures, and implement the next planned feature"
       ],

@@ -5,6 +5,9 @@ export type {
   Version,
   IncrementalUpdateRequest,
   IncrementalUpdateResponse,
+  DetectChangesRequest,
+  DetectChangesResponse,
+  NodeChangeInfo,
   HealthResponse,
 } from '../types';
 
@@ -15,6 +18,9 @@ export type {
    Version,
    IncrementalUpdateRequest,
    IncrementalUpdateResponse,
+   DetectChangesRequest,
+   DetectChangesResponse,
+   NodeChangeInfo,
    HealthResponse,
  } from '../types';
 
@@ -95,6 +101,12 @@ export const api = {
 
     incrementalUpdate: (docId: number, data: IncrementalUpdateRequest) =>
       fetchJson<IncrementalUpdateResponse>(`${API_BASE}/documents/${docId}/incremental-update`, {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }),
+
+    detectChanges: (docId: number, data: DetectChangesRequest) =>
+      fetchJson<DetectChangesResponse>(`${API_BASE}/documents/${docId}/detect-changes`, {
         method: 'POST',
         body: JSON.stringify(data),
       }),

@@ -46,12 +46,29 @@ export interface IncrementalUpdateRequest {
   new_nodes: Record<string, unknown>[];
 }
 
+export interface NodeChangeInfo {
+  structure: string;
+  node_id: number | null;
+  old_hash: string | null;
+  new_hash: string;
+  is_new: boolean;
+}
+
+export interface DetectChangesRequest {
+  nodes: Record<string, unknown>[];
+}
+
+export interface DetectChangesResponse {
+  changed: NodeChangeInfo[];
+  unchanged: number[];
+  new: NodeChangeInfo[];
+}
+
 export interface IncrementalUpdateResponse {
   updated: number;
   created: number;
   version: number;
 }
-
 export interface HealthResponse {
   status: string;
   version: string;
