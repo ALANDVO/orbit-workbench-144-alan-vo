@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useDocument, useDocumentNodes, useDocumentLeafNodes, useDocumentVersions } from '../hooks/useApi';
-import type { Node } from '../api/client';
+import { api } from '../api/client';
+import type { Node, DetectChangesRequest, DetectChangesResponse, NodeChangeInfo } from '../api/client';
 
 function TreeNode({ node, onUpdate }: { node: Node; onUpdate: (id: number, summary: string) => void }) {
   const [expanded, setExpanded] = useState(true);
@@ -21,46 +22,44 @@ function TreeNode({ node, onUpdate }: { node: Node; onUpdate: (id: number, summa
   return (
     <div className="tree-node">
       <div className="tree-node-header">
-        {node.children && node.children.length > 0 && (
-          <button
-            onClick={() => setExpanded(!expanded)}
-            aria-label={expanded ? 'Collapse' : 'Expand'}
-            style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
-          >
-            {expanded ? '▼' : '▶'}
-          </button>
-        )}
-        <span className="tree-node-title">{node.structure} {node.title}</span>
-        <span className="badge badge-primary">{node.content_hash.slice(0, 8)}</span>
         <button
-          className="btn btn-secondary"
-          style={{ padding: '4px 8px', fontSize: '12px', marginLeft: 'auto' }}
-          onClick={() => setEditing(true)}
+          className="expand-toggle"
+          onClick={() => setExpanded(!expanded)}
+          aria-expanded={expanded}
+          aria-label={expanded ? 'Collapse' : 'Expand'}
+        >
+          {expanded ? '▼' : '▶'}
+        </button>
+        <span className="tree-node-structure">{node.structure}</span>
+        <span className="tree-node-title">{node.title}</span>
+        {node.summary && <span className="tree-node-summary">{node.summary.slice(0, 80)}{node.summary.length > 80 ? '...' : ''}</span>}
+        <button
+          className="btn btn-secondary btn-sm"
+          onClick={() => {
+            setEditing(true);
+            setEditContent(node.summary || '');
+          }}
+          style={{ marginLeft: 'auto' }}
         >
           Edit
         </button>
       </div>
-
-      {editing ? (
-        <div style={{ marginTop: 8 }}>
+      {editing && (
+        <div className="tree-node-edit">
           <textarea
-            className="input"
             value={editContent}
             onChange={(e) => setEditContent(e.target.value)}
-            rows={4}
-            style={{ fontFamily: 'monospace', fontSize: '13px' }}
+            placeholder="Enter summary"
+            style={{ width: '100%', minHeight: 60, marginBottom: 8 }}
           />
-          <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+          <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
             <button className="btn btn-primary" onClick={handleSave}>Save</button>
             <button className="btn btn-secondary" onClick={handleCancel}>Cancel</button>
           </div>
         </div>
-      ) : node.summary && (
-        <div className="tree-node-summary">{node.summary}</div>
       )}
-
       {expanded && node.children && node.children.length > 0 && (
-        <div>
+        <div className="tree-node-children">
           {node.children.map((child) => (
             <TreeNode key={child.id} node={child} onUpdate={onUpdate} />
           ))}
@@ -79,7 +78,11 @@ export function DocumentDetailPage() {
   const { nodes: leafNodes, loading: leafLoading } = useDocumentLeafNodes(docId);
   const { versions, loading: versionsLoading } = useDocumentVersions(docId);
 
-  const [activeTab, setActiveTab] = useState<'tree' | 'leaves' | 'versions'>('tree');
+  const [activeTab, setActiveTab] = useState<'tree' | 'leaves' | 'versions' | 'diff'>('tree');
+  const [diffInput, setDiffInput] = useState('');
+  const [diffResult, setDiffResult] = useState<DetectChangesResponse | null>(null);
+  const [diffLoading, setDiffLoading] = useState(false);
+  const [diffError, setDiffError] = useState<string | null>(null);
 
   if (docLoading || nodesLoading || leafLoading || versionsLoading) {
     return <div className="loading"><div className="spinner" data-testid="loading-spinner" /></div>;
@@ -88,7 +91,7 @@ export function DocumentDetailPage() {
   if (docError) {
     return (
       <div className="error-state">
-        <h3>Error loading document</h3>
+        <h2>Error loading document</h2>
         <p>{docError}</p>
         <Link to="/" className="btn btn-primary">Back to Documents</Link>
       </div>
@@ -98,7 +101,7 @@ export function DocumentDetailPage() {
   if (!document) {
     return (
       <div className="error-state">
-        <h3>Document not found</h3>
+        <h2>Document not found</h2>
         <Link to="/" className="btn btn-primary">Back to Documents</Link>
       </div>
     );
@@ -108,6 +111,26 @@ export function DocumentDetailPage() {
 
   const handleUpdateNode = (nodeId: number, summary: string) => {
     updateNode(nodeId, { summary });
+  };
+
+  const handleDetectChanges = async () => {
+    setDiffLoading(true);
+    setDiffError(null);
+    try {
+      const nodesData = JSON.parse(diffInput);
+      const result = await api.documents.detectChanges(docId, { nodes: nodesData });
+      setDiffResult(result);
+    } catch (err) {
+      setDiffError(err instanceof Error ? err.message : 'Invalid JSON');
+    } finally {
+      setDiffLoading(false);
+    }
+  };
+
+  const handleClearDiff = () => {
+    setDiffInput('');
+    setDiffResult(null);
+    setDiffError(null);
   };
 
   return (
@@ -144,6 +167,12 @@ export function DocumentDetailPage() {
             onClick={() => setActiveTab('versions')}
           >
             Versions ({versions.length})
+          </button>
+          <button
+            className={`btn ${activeTab === 'diff' ? 'btn-primary' : 'btn-secondary'}`}
+            onClick={() => setActiveTab('diff')}
+          >
+            Diff
           </button>
         </div>
 
@@ -231,6 +260,128 @@ export function DocumentDetailPage() {
                     ))}
                   </tbody>
                 </table>
+              </div>
+            )}
+          </div>
+        )}
+
+        {activeTab === 'diff' && (
+          <div>
+            <div style={{ marginBottom: 16 }}>
+              <h3>Detect Changes</h3>
+              <p style={{ color: '#6b7280', marginBottom: 12 }}>
+                Paste JSON array of new node data to detect changes. Each node should have:
+                <code>structure</code>, <code>title</code>, <code>summary</code> (optional),
+                <code>parent_id</code> (optional), <code>start_page</code> (optional),
+                <code>end_page</code> (optional), <code>metadata</code> (optional).
+              </p>
+              <textarea
+                value={diffInput}
+                onChange={(e) => setDiffInput(e.target.value)}
+                style={{
+                  width: '100%',
+                  minHeight: 150,
+                  padding: 12,
+                  fontFamily: 'monospace',
+                  fontSize: 14,
+                  border: '1px solid #d1d5db',
+                  borderRadius: 6,
+                  marginBottom: 12,
+                }}
+              />
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button
+                  className="btn btn-primary"
+                  onClick={handleDetectChanges}
+                  disabled={diffLoading}
+                >
+                  {diffLoading ? 'Computing...' : 'Detect Changes'}
+                </button>
+                <button
+                  className="btn btn-secondary"
+                  onClick={handleClearDiff}
+                >
+                  Clear
+                </button>
+              </div>
+              {diffError && <div className="error-message" style={{ marginTop: 12, color: '#dc2626' }}>{diffError}</div>}
+            </div>
+
+            {diffResult && (
+              <div>
+                {diffResult.changed.length > 0 && (
+                  <div style={{ marginBottom: 20 }}>
+                    <h4>Changed Nodes ({diffResult.changed.length})</h4>
+                    <div className="table-container">
+                      <table>
+                        <thead>
+                          <tr>
+                            <th>Structure</th>
+                            <th>Node ID</th>
+                            <th>Old Hash</th>
+                            <th>New Hash</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {diffResult.changed.map((item, idx) => (
+                            <tr key={idx}>
+                              <td>{item.structure}</td>
+                              <td>{item.node_id || '-'}</td>
+                              <td>
+                                <span className="badge badge-danger">{item.old_hash?.slice(0, 12)}...</span>
+                              </td>
+                              <td>
+                                <span className="badge badge-success">{item.new_hash.slice(0, 12)}...</span>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
+
+                {diffResult.new.length > 0 && (
+                  <div style={{ marginBottom: 20 }}>
+                    <h4>New Nodes ({diffResult.new.length})</h4>
+                    <div className="table-container">
+                      <table>
+                        <thead>
+                          <tr>
+                            <th>Structure</th>
+                            <th>Hash</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {diffResult.new.map((item, idx) => (
+                            <tr key={idx}>
+                              <td>{item.structure}</td>
+                              <td>
+                                <span className="badge badge-primary">{item.new_hash.slice(0, 12)}...</span>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
+
+                {diffResult.unchanged.length > 0 && (
+                  <div>
+                    <h4>Unchanged Nodes ({diffResult.unchanged.length})</h4>
+                    <p style={{ color: '#6b7280' }}>
+                      Node IDs: {diffResult.unchanged.join(', ')}
+                    </p>
+                  </div>
+                )}
+
+                {diffResult.changed.length === 0 && diffResult.new.length === 0 && diffResult.unchanged.length === 0 && (
+                  <div className="empty-state">
+                    <h3>No changes detected</h3>
+                    <p>The provided nodes match the current document structure exactly.</p>
+                  </div>
+                )}
               </div>
             )}
           </div>

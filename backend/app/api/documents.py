@@ -99,6 +99,27 @@ class IncrementalUpdateResponse(BaseModel):
     version: int
 
 
+class DetectChangesRequest(BaseModel):
+    nodes: list[dict] = Field(default_factory=list)
+
+
+class NodeChangeInfo(BaseModel):
+    structure: str
+    node_id: Optional[int] = None
+    old_hash: Optional[str] = None
+    new_hash: str
+    is_new: bool = False
+
+
+class DetectChangesResponse(BaseModel):
+    changed: list[NodeChangeInfo]
+    unchanged: list[int]
+    new: list[NodeChangeInfo]
+    updated: int
+    created: int
+    version: int
+
+
 @router.post("", response_model=DocumentResponse, status_code=status.HTTP_201_CREATED)
 async def create_document(
     doc_in: DocumentCreate,
@@ -351,6 +372,50 @@ async def incremental_update(
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
 
+
+@router.post("/{doc_id}/detect-changes", response_model=DetectChangesResponse)
+async def detect_changes(
+    doc_id: int,
+    request: DetectChangesRequest,
+    db: AsyncSession = Depends(get_db),
+):
+    inc_service = IncrementalIndexService(db)
+    try:
+        changed, changed_ids, unchanged = await inc_service.detect_changed_nodes(
+            document_id=doc_id,
+            new_nodes_data=request.nodes,
+        )
+
+        changed_info = [
+            NodeChangeInfo(
+                structure=c.get("structure", ""),
+                node_id=c.get("node_id"),
+                old_hash=c.get("old_hash"),
+                new_hash=c.get("content_hash", ""),
+                is_new=False,
+            )
+            for c in changed
+        ]
+
+        new_nodes = [
+            NodeChangeInfo(
+                structure=n.get("structure", ""),
+                node_id=None,
+                old_hash=None,
+                new_hash=n.get("content_hash", ""),
+                is_new=True,
+            )
+            for n in request.nodes
+            if n.get("structure") not in [c.get("structure") for c in changed]
+        ]
+
+        return DetectChangesResponse(
+            changed=changed_info,
+            unchanged=unchanged,
+            new=new_nodes,
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
 
 @router.delete("/{doc_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_document(doc_id: int, db: AsyncSession = Depends(get_db)):

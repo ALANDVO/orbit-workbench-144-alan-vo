@@ -118,3 +118,10 @@ coverage/
 # package-lock.json
 # yarn.lock
 # pnpm-lock.yaml
+*.pyc
+*.db-wal
+*.db-shm
+*.sqlite-wal
+*.sqlite-shm
+*.sqlite3-wal
+*.sqlite3-shm
