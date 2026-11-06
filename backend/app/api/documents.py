@@ -380,8 +380,7 @@ async def detect_changes(
     db: AsyncSession = Depends(get_db),
 ):
     inc_service = IncrementalIndexService(db)
-    try:
-        changed, changed_ids, unchanged = await inc_service.detect_changed_nodes(
+    changed, new, unchanged = await inc_service.detect_changed_nodes(
             document_id=doc_id,
             new_nodes_data=request.nodes,
         )
@@ -405,8 +404,7 @@ async def detect_changes(
                 new_hash=n.get("content_hash", ""),
                 is_new=True,
             )
-            for n in request.nodes
-            if n.get("structure") not in [c.get("structure") for c in changed]
+            for n in new
         ]
 
         return DetectChangesResponse(

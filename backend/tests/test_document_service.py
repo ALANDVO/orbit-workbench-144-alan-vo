@@ -128,12 +128,15 @@ class TestIncrementalIndexService:
             {"structure": "3", "summary": "New chapter"},
         ]
 
-        changed, changed_ids, unchanged = await inc_service.detect_changed_nodes(doc.id, new_nodes)
+        changed, new, unchanged = await inc_service.detect_changed_nodes(doc.id, new_nodes)
         assert len(changed) == 1
         assert changed[0]["structure"] == "1"
         assert "node_id" in changed[0]
+        assert "content_hash" in changed[0]
+        assert len(new) == 1
+        assert new[0]["structure"] == "3"
+        assert "content_hash" in new[0]
         assert len(unchanged) == 1
-        assert len([n for n in new_nodes if n["structure"] == "3"]) == 1
 
     async def test_apply_incremental_update(self, inc_service, doc_service):
         doc = await doc_service.create_document("test.pdf", b"content", 10)

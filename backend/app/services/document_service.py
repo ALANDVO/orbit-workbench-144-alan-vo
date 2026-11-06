@@ -199,7 +199,7 @@ class IncrementalIndexService:
         self,
         document_id: int,
         new_nodes_data: List[dict],
-    ) -> tuple[List[dict], List[int], List[int]]:
+    ) -> tuple[List[dict], List[dict], List[int]]:
         existing_nodes = await self.session.execute(
             select(DocumentNode).where(DocumentNode.document_id == document_id)
         )
@@ -217,10 +217,12 @@ class IncrementalIndexService:
             if struct in existing_map:
                 existing = existing_map[struct]
                 if existing.content_hash != new_hash:
-                    changed.append({**node_data, "node_id": existing.id, "old_hash": existing.content_hash})
+                    changed.append({**node_data, "node_id": existing.id, "old_hash": existing.content_hash, "content_hash": new_hash})
                 else:
                     unchanged.append(existing.id)
-        return changed, [n["node_id"] for n in changed], unchanged
+            else:
+                new.append({**node_data, "content_hash": new_hash})
+        return changed, new, unchanged
 
     async def apply_incremental_update(
         self,
