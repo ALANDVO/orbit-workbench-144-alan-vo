@@ -54,3 +54,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - README with architecture diagram, API reference, and quick start
 - LICENSE (MIT)
 - Portfolio.json with schema version 1
+
+---
+
+Alan Vo · [alanvo.net](https://alanvo.net)

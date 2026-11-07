@@ -320,3 +320,7 @@ MIT Copyright Alan Vo <alanvo@gmail.com>
 - React frontend with tree view
 - Keycloak OIDC integration
 - Comprehensive test suite
+
+---
+
+Alan Vo · [alanvo.net](https://alanvo.net)

@@ -29,3 +29,6 @@ Status: planned
 Acceptance:
 - Run checks, fix failures, and implement the next planned feature
 
+---
+
+Alan Vo · [alanvo.net](https://alanvo.net)
