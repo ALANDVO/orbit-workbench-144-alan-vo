@@ -380,7 +380,8 @@ async def detect_changes(
     db: AsyncSession = Depends(get_db),
 ):
     inc_service = IncrementalIndexService(db)
-    changed, new, unchanged = await inc_service.detect_changed_nodes(
+    try:
+        changed, new, unchanged = await inc_service.detect_changed_nodes(
             document_id=doc_id,
             new_nodes_data=request.nodes,
         )
@@ -406,11 +407,13 @@ async def detect_changes(
             )
             for n in new
         ]
-
         return DetectChangesResponse(
             changed=changed_info,
             unchanged=unchanged,
             new=new_nodes,
+            updated=len(changed_info),
+            created=len(new_nodes),
+            version=1,
         )
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
