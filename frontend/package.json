@@ -5,7 +5,8 @@
   "type": "module",
   "author": {
     "name": "Alan Vo",
-    "email": "alanvo@gmail.com"
+    "email": "alanvo@gmail.com",
+    "url": "https://alanvo.net"
   },
   "scripts": {
     "dev": "vite",
