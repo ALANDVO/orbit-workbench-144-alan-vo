@@ -127,3 +127,4 @@ coverage/
 *.sqlite3-shm
 .turbo/
 **/data/media/
+.venv*/
