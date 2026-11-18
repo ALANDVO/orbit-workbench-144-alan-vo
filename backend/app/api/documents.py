@@ -407,14 +407,13 @@ async def detect_changes(
             )
             for n in new
         ]
-        return DetectChangesResponse(
+                versions = await inc_service.doc_service.get_versions(doc_id)\n                next_version = (versions[0].version_number + 1) if versions else 1\n        return DetectChangesResponse(
             changed=changed_info,
             unchanged=unchanged,
             new=new_nodes,
             updated=len(changed_info),
             created=len(new_nodes),
-            version=1,
-        )
+            version=next_version,\n        )
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
 
