@@ -59,6 +59,9 @@ export interface DetectChangesRequest {
 }
 
 export interface DetectChangesResponse {
+  updated: number;
+  created: number;
+  version: number;
   changed: NodeChangeInfo[];
   unchanged: number[];
   new: NodeChangeInfo[];
